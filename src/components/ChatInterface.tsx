@@ -35,6 +35,8 @@ const ChatInterface: React.FC = () => {
     if (input.trim() === '' || isLoading) return;
 
     const userMessage: Message = { text: input, isUser: true };
+    
+    // Optimistically update the UI with the user's message
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
@@ -42,12 +44,14 @@ const ChatInterface: React.FC = () => {
 
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      
+      // Send the entire conversation history
       const response = await fetch(`${backendUrl}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ messages: [...messages, userMessage] }),
       });
 
       if (!response.ok) {
@@ -56,11 +60,14 @@ const ChatInterface: React.FC = () => {
 
       const data = await response.json();
       const aiResponse: Message = { text: data.message, isUser: false };
+      
+      // Update the messages with the AI's response
       setMessages((prev) => [...prev, aiResponse]);
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       setError(errorMessage);
+      // Add an error message to the chat
       setMessages((prev) => [
         ...prev,
         { text: `Error: ${errorMessage}. Please check the backend connection.`, isUser: false },
