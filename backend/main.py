@@ -1,5 +1,5 @@
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -12,6 +12,9 @@ import sqlite3
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
+from fastapi.security import OAuth2PasswordBearer
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
 
 # Load environment variables
 load_dotenv()
@@ -27,6 +30,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# OAuth2 bearer token extractor
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 # --- Logging Configuration ---
 logging.basicConfig(level=logging.INFO)
@@ -114,7 +120,7 @@ class ChatResponse(BaseModel):
 # --- Gemini Model Initialization ---
 try:
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash-latest",
+        model="gemini-2.5-pro",
         temperature=0.7,
         google_api_key=os.getenv("GEMINI_API_KEY"),
     )
@@ -139,6 +145,13 @@ When a user asks for a learning plan, respond in a conversational way, and you c
 @app.get("/")
 async def root():
     return {"message": "Learn_mate Chat API is running!", "version": "3.0.0"}
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "gemini_configured": llm is not None,
+    }
 
 @app.post("/register", status_code=201)
 async def register_user(user: UserCreate):
@@ -173,7 +186,7 @@ async def login_for_access_token(user: UserLogin):
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-async def get_current_user(token: str = Depends()):
+async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
@@ -186,7 +199,7 @@ async def get_current_user(token: str = Depends()):
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    
+
     conn = get_db_connection()
     user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
     conn.close()
@@ -202,14 +215,16 @@ async def chat_with_agent(chat_history: ChatHistory, current_user: dict = Depend
     user_id = current_user["id"]
     conn = get_db_connection()
 
-    # Save user message to DB
+    # Get the last user message
     last_user_message = chat_history.messages[-1]
+
+    # Save user message to DB
     conn.execute(
         "INSERT INTO chat_messages (user_id, message, is_user) VALUES (?, ?, ?)",
         (user_id, last_user_message.text, True),
     )
     conn.commit()
-    
+
     # Construct message history for AI
     messages = [SystemMessage(content=SYSTEM_PROMPT)]
     # Fetch previous messages from DB
@@ -217,13 +232,13 @@ async def chat_with_agent(chat_history: ChatHistory, current_user: dict = Depend
         "SELECT message, is_user FROM chat_messages WHERE user_id = ? ORDER BY timestamp ASC",
         (user_id,)
     ).fetchall()
-    
+
     for msg in db_messages:
         if msg["is_user"]:
             messages.append(HumanMessage(content=msg["message"]))
         else:
             messages.append(AIMessage(content=msg["message"]))
-    
+
     # Generate response
     response = llm.invoke(messages)
     ai_response_text = response.content
@@ -237,6 +252,92 @@ async def chat_with_agent(chat_history: ChatHistory, current_user: dict = Depend
     conn.close()
 
     return ChatResponse(message=ai_response_text)
+
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
+
+# Ensure DB has google profile columns
+def ensure_profile_columns():
+    conn = get_db_connection()
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+    alter_statements = []
+    if "google_sub" not in cols:
+        alter_statements.append("ALTER TABLE users ADD COLUMN google_sub TEXT UNIQUE")
+    if "email" not in cols:
+        alter_statements.append("ALTER TABLE users ADD COLUMN email TEXT")
+    if "name" not in cols:
+        alter_statements.append("ALTER TABLE users ADD COLUMN name TEXT")
+    if "avatar_url" not in cols:
+        alter_statements.append("ALTER TABLE users ADD COLUMN avatar_url TEXT")
+    for stmt in alter_statements:
+        try:
+            conn.execute(stmt)
+        except Exception:
+            pass
+    conn.commit()
+    conn.close()
+
+ensure_profile_columns()
+
+class GoogleAuthRequest(BaseModel):
+    id_token: str
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    username: str
+    email: str | None = None
+    name: str | None = None
+    avatar_url: str | None = None
+
+@app.post("/auth/google", response_model=AuthResponse)
+async def auth_google(payload: GoogleAuthRequest):
+    if not GOOGLE_OAUTH_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="Google OAuth client ID not configured")
+    try:
+        idinfo = google_id_token.verify_oauth2_token(payload.id_token, google_requests.Request(), GOOGLE_OAUTH_CLIENT_ID)
+        if idinfo.get("aud") != GOOGLE_OAUTH_CLIENT_ID:
+            raise ValueError("Invalid audience")
+        google_sub = idinfo["sub"]
+        email = idinfo.get("email")
+        name = idinfo.get("name")
+        avatar_url = idinfo.get("picture")
+        username = email.split("@")[0] if email else f"user_{google_sub[:8]}"
+
+        conn = get_db_connection()
+        existing = conn.execute("SELECT * FROM users WHERE google_sub = ?", (google_sub,)).fetchone()
+        if existing is None:
+            # If username taken, make unique
+            final_username = username
+            idx = 1
+            while conn.execute("SELECT 1 FROM users WHERE username = ?", (final_username,)).fetchone():
+                final_username = f"{username}{idx}"
+                idx += 1
+            conn.execute(
+                "INSERT INTO users (username, hashed_password, google_sub, email, name, avatar_url) VALUES (?, ?, ?, ?, ?, ?)",
+                (final_username, "", google_sub, email, name, avatar_url),
+            )
+            conn.commit()
+            user_row = conn.execute("SELECT * FROM users WHERE google_sub = ?", (google_sub,)).fetchone()
+        else:
+            conn.execute(
+                "UPDATE users SET email = ?, name = ?, avatar_url = ? WHERE google_sub = ?",
+                (email, name, avatar_url, google_sub),
+            )
+            conn.commit()
+            user_row = conn.execute("SELECT * FROM users WHERE google_sub = ?", (google_sub,)).fetchone()
+        conn.close()
+
+        app_token = create_access_token({"sub": user_row["username"]}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+        return AuthResponse(
+            access_token=app_token,
+            username=user_row["username"],
+            email=user_row.get("email") if isinstance(user_row, dict) else user_row["email"],
+            name=user_row.get("name") if isinstance(user_row, dict) else user_row["name"],
+            avatar_url=user_row.get("avatar_url") if isinstance(user_row, dict) else user_row["avatar_url"],
+        )
+    except Exception as e:
+        logger.error(f"Google auth failed: {e}")
+        raise HTTPException(status_code=401, detail="Invalid Google ID token")
 
 if __name__ == "__main__":
     import uvicorn
