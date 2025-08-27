@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Any
 import os
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.schema import HumanMessage, SystemMessage
 import json
 import logging
@@ -16,7 +16,7 @@ app = FastAPI(title="Learn_mate API", version="2.0.0")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Adjust for your frontend port
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],  # Adjust for your frontend port
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,15 +26,15 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize OpenAI model
+# Initialize Gemini model
 try:
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.0-flash-exp",
         temperature=0.7,
-        openai_api_key=os.getenv("OPENAI_API_KEY")
+        google_api_key=os.getenv("GEMINI_API_KEY")
     )
 except Exception as e:
-    logger.error(f"Failed to initialize OpenAI model: {e}")
+    logger.error(f"Failed to initialize Gemini model: {e}")
     llm = None
 
 class ChatMessage(BaseModel):
@@ -62,14 +62,14 @@ async def root():
 async def health_check():
     return {
         "status": "healthy",
-        "openai_configured": llm is not None,
+        "gemini_configured": llm is not None,
     }
 
 @app.post("/chat", response_model=ChatMessage)
 async def chat_with_agent(user_message: ChatMessage):
     try:
         if not llm:
-            raise HTTPException(status_code=500, detail="OpenAI model not configured.")
+            raise HTTPException(status_code=500, detail="Gemini model not configured.")
 
         logger.info(f"Received message: {user_message.message}")
 
