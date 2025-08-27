@@ -11,12 +11,12 @@ import logging
 
 load_dotenv()
 
-app = FastAPI(title="Learn_mate API", version="1.0.0")
+app = FastAPI(title="Learn_mate API", version="2.0.0")
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Vite and Next.js default ports
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Adjust for your frontend port
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,121 +37,58 @@ except Exception as e:
     logger.error(f"Failed to initialize OpenAI model: {e}")
     llm = None
 
-class LearningGoal(BaseModel):
-    skill: str
-    duration: int
-    language: str
+class ChatMessage(BaseModel):
+    message: str
 
-class LearningPlan(BaseModel):
-    skill: str
-    duration: int
-    language: str
-    roadmap: List[Dict[str, Any]]
-    schedule: List[Dict[str, Any]]
-    checklist: List[Dict[str, Any]]
-    resources: List[Dict[str, Any]]
+# System prompt defining the agent's persona and capabilities
+SYSTEM_PROMPT = """You are Learn_mate, an expert AI Learning Guide Agent.
+
+Your main goal is to help users create, understand, and follow personalized learning plans. You are friendly, encouraging, and an expert in any topic the user wants to learn.
+
+Core Capabilities:
+1.  **Interactive Chat:** Engage in a natural, conversational manner.
+2.  **Learning Plan Generation:** If the user wants a learning plan, ask for the topic, their available time (in days), and their preferred language. Once you have this, generate a comprehensive plan.
+3.  **Question Answering:** Answer questions about the learning plan, suggest resources, and explain concepts.
+4.  **Progress & Motivation:** Encourage users and help them stay on track. (For now, just be encouraging in your responses).
+
+When a user asks for a learning plan, respond in a conversational way, and you can format the plan using markdown for readability in a chat interface.
+"""
 
 @app.get("/")
 async def root():
-    return {"message": "Learn_mate API is running!", "version": "1.0.0"}
+    return {"message": "Learn_mate Chat API is running!", "version": "2.0.0"}
 
 @app.get("/health")
 async def health_check():
     return {
         "status": "healthy",
         "openai_configured": llm is not None,
-        "api_key_configured": bool(os.getenv("OPENAI_API_KEY"))
     }
 
-def create_learning_prompt(skill: str, duration: int, language: str) -> str:
-    return f"""You are an expert Learning Guide Agent called Learn_mate. Create a comprehensive, personalized learning plan.
-
-User wants to learn: {skill}
-Available time: {duration} days
-Preferred language: {language}
-
-Create a structured learning plan with the following components:
-
-1. ROADMAP: 3 progressive milestones with:
-   - milestone: Clear milestone name
-   - description: What they'll achieve
-   - timeframe: Days X-Y format
-   - keyPoints: 4 specific learning objectives (array)
-
-2. SCHEDULE: Weekly breakdown with:
-   - week: Week number
-   - theme: Week's focus area
-   - dailyTasks: Array of daily tasks with:
-     - day: Day number (1 to {duration})
-     - focus: Daily learning focus
-     - tasks: Array of 4 specific tasks
-     - estimatedTime: Time estimate (e.g., "1-2 hours")
-
-3. CHECKLIST: 10 actionable tasks with:
-   - id: Sequential number as string
-   - task: Specific actionable task
-   - category: One of [setup, foundation, practice, community, project, feedback, portfolio, assessment, planning]
-   - completed: false
-
-4. RESOURCES: 3 groups (Foundation, Intermediate, Advanced) with:
-   - milestone: Milestone name
-   - links: Array of 4-5 resources with:
-     - title: Resource name
-     - url: Use realistic placeholder URLs (https://example.com)
-     - type: One of [documentation, tutorial, interactive, community, video, guide, practice, blog, tools, case-study, best-practices, certification, career]
-
-Respond ONLY with valid JSON matching this exact structure. All text should be in {language} except for the JSON keys which must remain in English.
-
-Make the plan realistic, progressive, and tailored to the {duration}-day timeframe."""
-
-@app.post("/generate-plan", response_model=LearningPlan)
-async def generate_learning_plan(goal: LearningGoal):
+@app.post("/chat", response_model=ChatMessage)
+async def chat_with_agent(user_message: ChatMessage):
     try:
         if not llm:
-            raise HTTPException(status_code=500, detail="OpenAI model not configured. Please check your API key.")
-        
-        logger.info(f"Generating plan for skill: {goal.skill}, duration: {goal.duration} days, language: {goal.language}")
-        
-        # Create the prompt
-        prompt = create_learning_prompt(goal.skill, goal.duration, goal.language)
-        
-        # Create messages for the LLM
+            raise HTTPException(status_code=500, detail="OpenAI model not configured.")
+
+        logger.info(f"Received message: {user_message.message}")
+
         messages = [
-            SystemMessage(content="You are Learn_mate, an expert AI learning guide. Always respond with valid JSON only."),
-            HumanMessage(content=prompt)
+            SystemMessage(content=SYSTEM_PROMPT),
+            HumanMessage(content=user_message.message)
         ]
-        
+
         # Generate response
         response = llm.invoke(messages)
-        
-        # Parse the JSON response
-        try:
-            plan_data = json.loads(response.content)
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse LLM response as JSON: {e}")
-            logger.error(f"LLM Response: {response.content}")
-            raise HTTPException(status_code=500, detail="Failed to generate valid learning plan format")
-        
-        # Ensure the response has the required structure
-        required_keys = ["roadmap", "schedule", "checklist", "resources"]
-        for key in required_keys:
-            if key not in plan_data:
-                raise HTTPException(status_code=500, detail=f"Missing required field: {key}")
-        
-        # Add the input parameters to the response
-        plan_data["skill"] = goal.skill
-        plan_data["duration"] = goal.duration
-        plan_data["language"] = goal.language
-        
-        logger.info("Successfully generated learning plan")
-        return LearningPlan(**plan_data)
-        
-    except HTTPException:
-        raise
+        ai_response_text = response.content
+
+        logger.info(f"Sending AI response: {ai_response_text}")
+        return ChatMessage(message=ai_response_text)
+
     except Exception as e:
-        logger.error(f"Error generating learning plan: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate learning plan: {str(e)}")
+        logger.error(f"Error in chat endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get response from agent: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)</parameter>
+    uvicorn.run(app, host="0.0.0.0", port=8000)
