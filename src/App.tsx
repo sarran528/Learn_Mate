@@ -7,6 +7,8 @@ import Auth from './components/Auth';
 function App() {
   const [token, setToken] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(false);
+  const [checklist, setChecklist] = useState<string[]>([]);
+  const [roadmap, setRoadmap] = useState<string[]>([]);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -23,6 +25,8 @@ function App() {
   const handleLogout = () => {
     setToken(null);
     localStorage.removeItem('token');
+    setChecklist([]);
+    setRoadmap([]);
   };
 
   return (
@@ -86,17 +90,20 @@ function App() {
         {!token ? (
           <Auth setToken={handleSetToken} />
         ) : (
-          <div className="flex flex-col md:flex-row gap-6 h-[70vh]">
-            <div className={
-              'md:w-1/2 w-full h-full rounded-xl shadow p-4 overflow-auto transition-colors duration-300 ' +
-              (darkMode ? 'bg-gray-900' : 'bg-white/80')
-            }>
-              <ChatInterface token={token} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(100vh-150px)]">
+            <div className="bg-white/70 backdrop-blur-sm border border-blue-100 rounded-xl shadow-lg">
+              <ChatInterface 
+                token={token} 
+                setChecklist={setChecklist}
+                setRoadmap={setRoadmap}
+              />
             </div>
-            <div className={
-              'md:w-1/2 w-full h-full rounded-xl shadow p-4 overflow-auto transition-colors duration-300'
-            }>
-              <Workspace darkMode={darkMode} setDarkMode={setDarkMode} />
+            <div className="bg-white/70 backdrop-blur-sm border border-blue-100 rounded-xl shadow-lg p-6 overflow-y-auto">
+              <Workspace 
+                checklist={checklist} 
+                roadmap={roadmap} 
+                setChecklist={setChecklist}
+              />
             </div>
           </div>
         )}

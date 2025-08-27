@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_requests
+import json
 
 # Load environment variables
 load_dotenv()
@@ -116,11 +117,13 @@ class ChatHistory(BaseModel):
 
 class ChatResponse(BaseModel):
     message: str
+    checklist: List[str] = []
+    roadmap: List[str] = []
 
 # --- Gemini Model Initialization ---
 try:
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-pro",
+        model="gemini-1.5-flash-latest",
         temperature=0.7,
         google_api_key=os.getenv("GEMINI_API_KEY"),
     )
@@ -136,9 +139,20 @@ Core Capabilities:
 1.  **Interactive Chat:** Engage in a natural, conversational manner.
 2.  **Learning Plan Generation:** If the user wants a learning plan, ask for the topic, their available time (in days), and their preferred language. Once you have this, generate a comprehensive plan.
 3.  **Question Answering:** Answer questions about the learning plan, suggest resources, and explain concepts.
-4.  **Progress & Motivation:** Encourage users and help them stay on track. (For now, just be encouraging in your responses).
+4.  **Progress & Motivation:** Encourage users and help them stay on track.
 
-When a user asks for a learning plan, respond in a conversational way, and you can format the plan using markdown for readability in a chat interface.
+**Output Format:**
+You MUST respond in a JSON format with the following keys:
+- "message": Your conversational response to the user. This should be in markdown.
+- "checklist": An array of strings representing the learning checklist. This should be updated based on the conversation.
+- "roadmap": An array of strings representing the learning roadmap. This should be updated based on the conversation.
+
+Example response:
+{
+  "message": "Great! Let's start with the basics of Python. Here is a checklist and a roadmap for you.",
+  "checklist": ["Install Python", "Run your first 'Hello, World!' program"],
+  "roadmap": ["Day 1: Introduction to Python", "Day 2: Variables and Data Types"]
+}
 '''
 
 # --- API Endpoints ---
@@ -251,7 +265,17 @@ async def chat_with_agent(chat_history: ChatHistory, current_user: dict = Depend
     conn.commit()
     conn.close()
 
-    return ChatResponse(message=ai_response_text)
+    try:
+        # The response from the AI should be a JSON string
+        # We need to remove the code block markers if they exist
+        if ai_response_text.startswith("```json"):
+            ai_response_text = ai_response_text[7:-4]
+        response_data = json.loads(ai_response_text)
+        return ChatResponse(**response_data)
+    except (json.JSONDecodeError, TypeError) as e:
+        logger.error(f"Error decoding AI response: {e}\nResponse: {ai_response_text}")
+        # Fallback to returning the raw text if parsing fails
+        return ChatResponse(message=ai_response_text)
 
 GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
 
