@@ -1,8 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrainCircuit } from 'lucide-react';
 import ChatInterface from './components/ChatInterface';
+import Auth from './components/Auth';
 
 function App() {
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
+    }
+  }, []);
+
+  const handleSetToken = (newToken: string) => {
+    setToken(newToken);
+    localStorage.setItem('token', newToken);
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    localStorage.removeItem('token');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Header */}
@@ -20,13 +40,21 @@ function App() {
                 <p className="text-sm text-gray-600">AI-Powered Learning Guide Agent</p>
               </div>
             </div>
+            {token && (
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 font-bold text-white bg-red-500 rounded hover:bg-red-700 focus:outline-none focus:shadow-outline"
+              >
+                Logout
+              </button>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ChatInterface />
+        {!token ? <Auth setToken={handleSetToken} /> : <ChatInterface token={token} />}
       </main>
     </div>
   );
