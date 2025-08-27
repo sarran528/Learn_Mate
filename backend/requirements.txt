@@ -6,3 +6,6 @@ langchain-google-genai==0.0.8
 pydantic==2.5.0
 python-multipart==0.0.6
 google-auth==2.35.0
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+sqlite3
