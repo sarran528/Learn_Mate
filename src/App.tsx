@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Workspace from './components/Workspace';
 import { BrainCircuit } from 'lucide-react';
 import ChatInterface from './components/ChatInterface';
 import Auth from './components/Auth';
@@ -52,9 +53,20 @@ function App() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {!token ? <Auth setToken={handleSetToken} /> : <ChatInterface token={token} />}
+      {/* Main Content - Split Layout */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {!token ? (
+          <Auth setToken={handleSetToken} />
+        ) : (
+          <div className="flex flex-col md:flex-row gap-6 h-[70vh]">
+            <div className="md:w-1/2 w-full h-full bg-white/80 rounded-xl shadow p-4 overflow-auto">
+              <ChatInterface token={token} />
+            </div>
+            <div className="md:w-1/2 w-full h-full bg-white/80 rounded-xl shadow p-4 overflow-auto">
+              <Workspace />
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
