@@ -5,38 +5,116 @@ const TEMPLATES = {
   React: {
     checklist: ['Read React docs', 'Build a TODO app', 'Learn Hooks', 'Practice state management', 'Create a portfolio project'],
     roadmap: ['JSX & Components', 'State & Props', 'Hooks', 'Context API', 'React Router', 'State Management (Redux/Zustand)', 'Testing', 'Deployment'],
-    schedule: ['Week 1: JSX & Components', 'Week 2: State & Props', 'Week 3: Hooks & Context', 'Week 4: Routing & API Integration', 'Week 5-6: Build a project'],
-    resources: ['https://react.dev', 'https://beta.reactjs.org', 'https://www.youtube.com/c/TraversyMedia', 'https://scrimba.com/learn/learnreact']
+    schedule: [
+      'Week 1: JSX & Components - Learn basic React syntax and component structure',
+      'Week 2: State & Props - Master component communication and state management',
+      'Week 3: Hooks & Context - Explore modern React patterns and state sharing',
+      'Week 4: Routing & API Integration - Build multi-page apps with data fetching',
+      'Week 5-6: Build a project - Create a complete React application portfolio'
+    ],
+    resources: [
+      'https://react.dev',
+      'https://beta.reactjs.org',
+      'https://www.youtube.com/c/TraversyMedia',
+      'https://scrimba.com/learn/learnreact',
+      'https://www.udemy.com/course/react-the-complete-guide-incl-redux/',
+      'https://www.freecodecamp.org/news/learn-react-js-in-this-crash-course/'
+    ]
   },
   Python: {
     checklist: ['Install Python', 'Setup development environment', 'Master basic syntax', 'Learn data structures', 'Practice OOP concepts', 'Build a command-line app'],
     roadmap: ['Syntax & Basics', 'Data Structures', 'Functions & OOP', 'Modules & Packages', 'File I/O', 'Error Handling', 'Web Frameworks (Flask/Django)', 'Data Analysis (Pandas)'],
-    schedule: ['Week 1: Syntax & Basics', 'Week 2: Data Structures & Functions', 'Week 3: OOP & Modules', 'Week 4: Project Development', 'Week 5: Framework Introduction'],
-    resources: ['https://docs.python.org/3', 'https://realpython.com', 'https://www.py4e.com', 'https://automatetheboringstuff.com']
+    schedule: [
+      'Week 1: Syntax & Basics - Learn Python fundamentals and basic programming concepts',
+      'Week 2: Data Structures & Functions - Master lists, dictionaries, and function creation',
+      'Week 3: OOP & Modules - Understand classes, objects, and code organization',
+      'Week 4: Project Development - Build practical applications and solve real problems',
+      'Week 5: Framework Introduction - Explore web development with Flask or Django'
+    ],
+    resources: [
+      'https://docs.python.org/3',
+      'https://realpython.com',
+      'https://www.py4e.com',
+      'https://automatetheboringstuff.com',
+      'https://www.youtube.com/c/Coreyms',
+      'https://www.coursera.org/learn/python'
+    ]
   },
   JavaScript: {
     checklist: ['Learn syntax', 'Understand DOM manipulation', 'Master ES6+ features', 'Practice async programming', 'Build a web app'],
     roadmap: ['Syntax & Basics', 'DOM Manipulation', 'ES6+ Features', 'Async Programming', 'APIs & Fetch', 'Error Handling', 'Frameworks Introduction', 'Build Projects'],
-    schedule: ['Week 1: Syntax & DOM', 'Week 2: ES6+ & Functions', 'Week 3: Async Programming', 'Week 4: APIs & Projects', 'Week 5: Framework Selection'],
-    resources: ['https://javascript.info', 'https://developer.mozilla.org/en-US/docs/Web/JavaScript', 'https://www.freecodecamp.org', 'https://www.codecademy.com/learn/introduction-to-javascript']
+    schedule: [
+      'Week 1: Syntax & DOM - Learn JavaScript basics and browser manipulation',
+      'Week 2: ES6+ & Functions - Master modern JavaScript features and functional programming',
+      'Week 3: Async Programming - Understand promises, async/await, and API calls',
+      'Week 4: APIs & Projects - Build real-world applications with external data',
+      'Week 5: Framework Selection - Choose and learn a modern JavaScript framework'
+    ],
+    resources: [
+      'https://javascript.info',
+      'https://developer.mozilla.org/en-US/docs/Web/JavaScript',
+      'https://www.freecodecamp.org',
+      'https://www.codecademy.com/learn/introduction-to-javascript',
+      'https://www.youtube.com/c/TheNetNinja',
+      'https://www.udemy.com/course/the-complete-javascript-course/'
+    ]
   },
   'Machine Learning': {
     checklist: ['Learn Python', 'Master NumPy & Pandas', 'Study statistics', 'Understand ML algorithms', 'Practice with datasets', 'Build a portfolio project'],
     roadmap: ['Python Fundamentals', 'Mathematics & Statistics', 'Data Preparation', 'ML Algorithms', 'Deep Learning Intro', 'Neural Networks', 'Model Deployment', 'Projects'],
-    schedule: ['Month 1: Python & Math Foundations', 'Month 2: Data Analysis & Preparation', 'Month 3: ML Algorithms', 'Month 4: Neural Networks', 'Month 5-6: Projects & Portfolio'],
-    resources: ['https://www.kaggle.com/learn', 'https://www.coursera.org/specializations/machine-learning-introduction', 'https://www.fast.ai', 'https://www.tensorflow.org/tutorials']
+    schedule: [
+      'Month 1: Python & Math Foundations - Build programming and mathematical foundations',
+      'Month 2: Data Analysis & Preparation - Master data manipulation and preprocessing',
+      'Month 3: ML Algorithms - Learn supervised and unsupervised learning techniques',
+      'Month 4: Neural Networks - Explore deep learning and neural network architectures',
+      'Month 5-6: Projects & Portfolio - Build real ML projects and showcase your skills'
+    ],
+    resources: [
+      'https://www.kaggle.com/learn',
+      'https://www.coursera.org/specializations/machine-learning-introduction',
+      'https://www.fast.ai',
+      'https://www.tensorflow.org/tutorials',
+      'https://www.youtube.com/c/KrishNaik',
+      'https://www.udemy.com/course/machinelearning/'
+    ]
   },
   'Web Development': {
     checklist: ['Learn HTML/CSS', 'Study JavaScript', 'Understand responsive design', 'Master a frontend framework', 'Learn backend basics', 'Build a full-stack project'],
     roadmap: ['HTML & CSS', 'JavaScript', 'Responsive Design', 'Frontend Framework (React/Vue/Angular)', 'Backend Basics', 'Databases', 'API Development', 'Deployment'],
-    schedule: ['Month 1: HTML/CSS & JavaScript', 'Month 2: Frontend Framework', 'Month 3: Backend & Databases', 'Month 4: Full-stack Integration', 'Month 5: Project & Deployment'],
-    resources: ['https://www.freecodecamp.org', 'https://www.theodinproject.com', 'https://fullstackopen.com', 'https://developer.mozilla.org/en-US/docs/Learn']
+    schedule: [
+      'Month 1: HTML/CSS & JavaScript - Build strong frontend foundations',
+      'Month 2: Frontend Framework - Master React, Vue, or Angular for modern web apps',
+      'Month 3: Backend & Databases - Learn server-side development and data storage',
+      'Month 4: Full-stack Integration - Connect frontend and backend seamlessly',
+      'Month 5: Project & Deployment - Deploy your full-stack application to production'
+    ],
+    resources: [
+      'https://www.freecodecamp.org',
+      'https://www.theodinproject.com',
+      'https://fullstackopen.com',
+      'https://developer.mozilla.org/en-US/docs/Learn',
+      'https://www.youtube.com/c/TraversyMedia',
+      'https://www.udemy.com/course/the-complete-web-developer-zero-to-mastery/'
+    ]
   },
   'Data Science': {
     checklist: ['Learn Python', 'Master data analysis libraries', 'Study statistics', 'Learn visualization techniques', 'Practice with real datasets', 'Create a portfolio'],
     roadmap: ['Python Basics', 'Data Analysis (Pandas)', 'Data Visualization', 'Statistics', 'SQL & Databases', 'Machine Learning Basics', 'Big Data Tools', 'Projects'],
-    schedule: ['Month 1: Python & Data Analysis', 'Month 2: Visualization & Statistics', 'Month 3: SQL & Databases', 'Month 4: ML Applications', 'Month 5-6: Projects & Portfolio'],
-    resources: ['https://www.datacamp.com', 'https://www.kaggle.com', 'https://www.coursera.org/specializations/data-science', 'https://www.edx.org/professional-certificate/harvardx-data-science']
+    schedule: [
+      'Month 1: Python & Data Analysis - Learn Python and pandas for data manipulation',
+      'Month 2: Visualization & Statistics - Master data visualization and statistical analysis',
+      'Month 3: SQL & Databases - Understand data storage and querying techniques',
+      'Month 4: ML Applications - Apply machine learning to data science problems',
+      'Month 5-6: Projects & Portfolio - Build comprehensive data science projects'
+    ],
+    resources: [
+      'https://www.datacamp.com',
+      'https://www.kaggle.com',
+      'https://www.coursera.org/specializations/data-science',
+      'https://www.edx.org/professional-certificate/harvardx-data-science',
+      'https://www.youtube.com/c/KenJee_ds',
+      'https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/'
+    ]
   }
 };
 
@@ -95,10 +173,12 @@ export default function Chatbot({ onSuggest }) {
   };
 
   const handleSuggest = () => {
+    console.log('handleSuggest called with query:', query);
     if (!query.trim()) return;
     
     // Add user message
     const userMessage = query.trim();
+    console.log('Adding user message:', userMessage);
     setMessages(prev => [...prev, { text: userMessage, isUser: true }]);
     
     setLoading(true);
@@ -113,6 +193,7 @@ export default function Chatbot({ onSuggest }) {
       if (template) {
         // Add assistant response
         const response = `I've created a learning plan for ${matchedTopic}! Check out the roadmap, schedule, and resources.`;
+        console.log('Template found, calling onSuggest with:', template);
         setMessages(prev => [...prev, { text: response, isUser: false }]);
         onSuggest({ 
           checklist: template.checklist, 
@@ -205,7 +286,10 @@ export default function Chatbot({ onSuggest }) {
           className="flex-grow border rounded px-3 py-2" 
         />
         <button 
-          onClick={handleSuggest} 
+          onClick={() => {
+            console.log('Send button clicked');
+            handleSuggest();
+          }} 
           disabled={loading || !query.trim()}
           className={`px-4 py-2 bg-blue-600 text-white rounded ${
             loading || !query.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
@@ -218,7 +302,11 @@ export default function Chatbot({ onSuggest }) {
       {/* Quick suggestions */}
       <div className="mt-3 flex flex-wrap gap-2">
         <button 
-          onClick={() => { setQuery('JavaScript'); handleSuggest(); }} 
+          onClick={() => { 
+            console.log('JavaScript button clicked');
+            setQuery('JavaScript'); 
+            setTimeout(() => handleSuggest(), 100);
+          }} 
           className="px-2 py-1 text-xs border rounded text-blue-600 hover:bg-blue-50"
         >
           JavaScript

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
-import Checklist from './components/Checklist';
-import Roadmap from './components/Roadmap';
-import Schedule from './components/Schedule';
-import Resources from './components/Resources';
-import Chatbot from './components/Chatbot';
+import Navbar from './components/Navbar.jsx';
+import Sidebar from './components/Sidebar.jsx';
+import Checklist from './components/Checklist.jsx';
+import Roadmap from './components/Roadmap.jsx';
+import Schedule from './components/Schedule.jsx';
+import Resources from './components/Resources.jsx';
+import Chatbot from './components/Chatbot.jsx';
 
 export default function App() {
   const [active, setActive] = useState('Overview');
@@ -33,8 +33,8 @@ export default function App() {
     // Update current topic
     setCurrentTopic(detectedTopic);
     
-    // Switch to the roadmap view to show the learning path
-    setActive('Roadmap');
+    // Switch to the overview view to show the learning path
+    setActive('Overview');
   };
 
   return (
@@ -59,6 +59,8 @@ export default function App() {
             <div className="lg:col-span-2 space-y-4">
               {active === 'Checklist' && <Checklist items={checklist} onRemove={(i)=>setChecklist(prev => prev.filter((_,idx)=>idx!==i))} />}
               {active === 'Roadmap' && <Roadmap steps={roadmap} onRemove={(i)=>setRoadmap(prev => prev.filter((_,idx)=>idx!==i))} />}
+              {active === 'Schedule' && <Schedule items={schedule} />}
+              {active === 'Resources' && <Resources items={resources} />}
               {active === 'Overview' && (
                 <div className="p-4 bg-white rounded shadow dark:bg-slate-800">
                   <h2 className="font-semibold mb-2">Welcome to Learn_Mate</h2>
@@ -74,23 +76,26 @@ export default function App() {
                       </p>
                     </div>
                   )}
+                  
+                  {currentTopic && (
+                    <div className="mt-4 p-4 bg-green-50 dark:bg-green-900 rounded border border-green-100 dark:border-green-800">
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        <span className="font-medium">Learning Plan Created!</span> Use the sidebar to explore your personalized learning path:
+                      </p>
+                      <div className="mt-2 space-y-1 text-xs text-green-600 dark:text-green-400">
+                        <div>• <strong>Checklist:</strong> Track your progress with actionable tasks</div>
+                        <div>• <strong>Roadmap:</strong> See the step-by-step learning journey</div>
+                        <div>• <strong>Schedule:</strong> View your weekly learning timeline</div>
+                        <div>• <strong>Resources:</strong> Access curated learning materials</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-              
-              {/* Show schedule in main content on larger screens */}
-              <div className="lg:hidden">
-                <Schedule items={schedule} />
-              </div>
             </div>
 
             <aside className="lg:col-span-1 space-y-4">
               <Chatbot onSuggest={handleSuggest} />
-              
-              {/* Only show these on larger screens in the sidebar */}
-              <div className="hidden lg:block">
-                <Schedule items={schedule} />
-              </div>
-              <Resources items={resources} />
             </aside>
           </div>
         </main>
