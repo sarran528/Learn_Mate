@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Send, Bot, User, Sparkles, Zap, BookOpen, Code, Brain, Database, Lightbulb } from 'lucide-react';
 
 // Enhanced local suggestion engine with more learning paths
 const TEMPLATES = {
@@ -115,10 +116,48 @@ const TEMPLATES = {
       'https://www.youtube.com/c/KenJee_ds',
       'https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/'
     ]
+  },
+  'Java': {
+    checklist: ['Install Java JDK', 'Setup development environment (IDE)', 'Learn basic syntax', 'Understand OOP concepts', 'Practice data structures', 'Build a portfolio project'],
+    roadmap: ['Java Basics', 'Object-Oriented Programming', 'Data Structures', 'Algorithms', 'Collections Framework', 'Exception Handling', 'File I/O', 'Advanced Topics'],
+    schedule: [
+      'Week 1: Java Basics - Learn syntax, variables, control structures, and methods',
+      'Week 2: OOP Concepts - Master classes, objects, inheritance, and polymorphism',
+      'Week 3: Data Structures - Learn arrays, linked lists, stacks, and queues',
+      'Week 4: Algorithms - Practice sorting, searching, and problem-solving techniques',
+      'Week 5-6: Advanced Topics - Explore collections, exceptions, and file handling'
+    ],
+    resources: [
+      'https://docs.oracle.com/javase/tutorial/',
+      'https://www.w3schools.com/java/',
+      'https://www.geeksforgeeks.org/java/',
+      'https://www.youtube.com/c/ProgrammingwithMosh',
+      'https://www.udemy.com/course/java-tutorial/',
+      'https://www.coursera.org/learn/java-programming'
+    ]
+  },
+  'DSA': {
+    checklist: ['Learn programming basics', 'Master fundamental data structures', 'Practice algorithm patterns', 'Solve coding problems', 'Participate in contests', 'Build problem-solving skills'],
+    roadmap: ['Programming Fundamentals', 'Basic Data Structures', 'Advanced Data Structures', 'Algorithm Analysis', 'Problem Solving', 'Competitive Programming'],
+    schedule: [
+      'Week 1-2: Programming Fundamentals - Master basic programming concepts and syntax',
+      'Week 3-4: Basic Data Structures - Learn arrays, linked lists, stacks, queues, and trees',
+      'Week 5-6: Advanced Data Structures - Master heaps, graphs, and advanced tree structures',
+      'Week 7-8: Algorithm Analysis - Understand time/space complexity and optimization',
+      'Week 9-10: Problem Solving - Practice on platforms like LeetCode and HackerRank'
+    ],
+    resources: [
+      'https://leetcode.com',
+      'https://www.hackerrank.com',
+      'https://www.geeksforgeeks.org/data-structures/',
+      'https://www.youtube.com/c/BackToBackSWE',
+      'https://www.udemy.com/course/data-structures-algorithms-java/',
+      'https://www.coursera.org/specializations/data-structures-algorithms'
+    ]
   }
 };
 
-export default function Chatbot({ onSuggest }) {
+export default function Chatbot({ onSuggest, darkMode = false }) {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([
@@ -160,7 +199,12 @@ export default function Chatbot({ onSuggest }) {
       'backend': 'Web Development',
       'fullstack': 'Web Development',
       'data science': 'Data Science',
-      'data analysis': 'Data Science'
+      'data analysis': 'Data Science',
+      'java': 'Java',
+      'dsa': 'DSA',
+      'data structures': 'DSA',
+      'algorithms': 'DSA',
+      'data structures and algorithms': 'DSA'
     };
     
     for (const [keyword, template] of Object.entries(keywords)) {
@@ -174,7 +218,7 @@ export default function Chatbot({ onSuggest }) {
 
   const handleSuggest = () => {
     console.log('handleSuggest called with query:', query);
-    if (!query.trim()) return;
+    if (!query.trim() || loading) return;
     
     // Add user message
     const userMessage = query.trim();
@@ -199,7 +243,8 @@ export default function Chatbot({ onSuggest }) {
           checklist: template.checklist, 
           roadmap: template.roadmap, 
           schedule: template.schedule, 
-          resources: template.resources 
+          resources: template.resources,
+          topic: matchedTopic
         });
       } else {
         // Create a generic learning plan
@@ -232,7 +277,8 @@ export default function Chatbot({ onSuggest }) {
             'https://www.coursera.org',
             'https://www.udemy.com', 
             'https://www.youtube.com/learning'
-          ]
+          ],
+          topic: userMessage
         });
       }
       
@@ -242,93 +288,170 @@ export default function Chatbot({ onSuggest }) {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleSuggest();
     }
   };
 
+  const quickSuggestOptions = [
+    { name: 'JavaScript', icon: Code, color: 'from-yellow-500 to-orange-600' },
+    { name: 'Machine Learning', icon: Brain, color: 'from-purple-500 to-pink-600' },
+    { name: 'Python', icon: Zap, color: 'from-blue-500 to-teal-600' },
+    { name: 'Data Science', icon: Database, color: 'from-green-500 to-emerald-600' },
+    { name: 'Java', icon: BookOpen, color: 'from-red-500 to-rose-600' },
+    { name: 'DSA', icon: Lightbulb, color: 'from-indigo-500 to-purple-600' }
+  ];
+
+  const handleQuickSuggest = (topic) => {
+    setQuery(topic);
+    setTimeout(() => handleSuggest(), 100);
+  };
+
   return (
-    <div className="p-4 bg-white rounded shadow">
-      <h3 className="font-semibold mb-2">Learning Assistant</h3>
+    <div className={`flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden ${
+      darkMode 
+        ? 'bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl border border-slate-700/50' 
+        : 'bg-gradient-to-br from-white/95 via-blue-50/95 to-indigo-50/95 backdrop-blur-xl border border-white/50'
+    }`}>
+      {/* Header */}
+      <div className={`px-6 py-4 border-b ${
+        darkMode 
+          ? 'border-slate-700/50 bg-gradient-to-r from-slate-800/80 to-slate-900/80' 
+          : 'border-blue-100/50 bg-gradient-to-r from-blue-50/80 to-indigo-50/80'
+      }`}>
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-xl ${
+            darkMode 
+              ? 'bg-gradient-to-br from-blue-600 to-purple-700 shadow-lg shadow-blue-500/25' 
+              : 'bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/25'
+          }`}>
+            <Bot className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h3 className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              Learning Assistant
+            </h3>
+            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              AI-powered study companion
+            </p>
+          </div>
+          <div className="ml-auto">
+            <Sparkles className={`h-5 w-5 ${darkMode ? 'text-yellow-400' : 'text-yellow-500'} animate-pulse`} />
+          </div>
+        </div>
+      </div>
       
-      {/* Chat message display area */}
-      <div className="mb-3 h-64 overflow-y-auto border rounded p-3 bg-gray-50">
+             {/* Chat Messages */}
+       <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${
+         darkMode ? 'bg-slate-900/20' : 'bg-white/20'
+       }`} style={{maxHeight: 'calc(100vh - 400px)'}}>
         {messages.map((msg, idx) => (
-          <div key={idx} className={`mb-2 ${msg.isUser ? 'text-right' : ''}`}>
-            <div className={`inline-block px-3 py-2 rounded-lg ${
-              msg.isUser 
-                ? 'bg-blue-600 text-white rounded-br-none' 
-                : 'bg-gray-200 text-gray-800 rounded-bl-none'
-            }`}>
-              {msg.text}
-            </div>
-            <div className={`text-xs text-gray-500 mt-1 ${msg.isUser ? 'text-right' : ''}`}>
-              {msg.isUser ? 'You' : 'Assistant'}
+          <div key={idx} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
+            <div className={`flex items-start gap-3 max-w-[85%] ${msg.isUser ? 'flex-row-reverse' : ''}`}>
+              <div className={`p-2 rounded-full flex-shrink-0 ${
+                msg.isUser 
+                  ? (darkMode ? 'bg-blue-600' : 'bg-blue-500')
+                  : (darkMode ? 'bg-slate-700' : 'bg-gray-200')
+              }`}>
+                {msg.isUser ? (
+                  <User className="h-4 w-4 text-white" />
+                ) : (
+                  <Bot className={`h-4 w-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                )}
+              </div>
+              <div className={`p-4 rounded-2xl shadow-lg ${
+                msg.isUser 
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-md'
+                  : (darkMode 
+                      ? 'bg-slate-800/90 text-gray-100 border border-slate-700/50 rounded-bl-md' 
+                      : 'bg-white/90 text-gray-800 border border-gray-200/50 rounded-bl-md'
+                    )
+              }`}>
+                <p className="text-sm leading-relaxed">{msg.text}</p>
+              </div>
             </div>
           </div>
         ))}
+        
         {loading && (
-          <div className="text-gray-500 text-sm">
-            <span className="inline-block animate-bounce">●</span>
-            <span className="inline-block animate-bounce delay-100">●</span>
-            <span className="inline-block animate-bounce delay-200">●</span>
+          <div className="flex justify-start animate-fadeIn">
+            <div className="flex items-start gap-3">
+              <div className={`p-2 rounded-full ${darkMode ? 'bg-slate-700' : 'bg-gray-200'}`}>
+                <Bot className={`h-4 w-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+              </div>
+              <div className={`p-4 rounded-2xl rounded-bl-md shadow-lg ${
+                darkMode 
+                  ? 'bg-slate-800/90 border border-slate-700/50' 
+                  : 'bg-white/90 border border-gray-200/50'
+              }`}>
+                <div className="flex space-x-1">
+                  <div className={`w-2 h-2 rounded-full animate-bounce ${darkMode ? 'bg-blue-400' : 'bg-blue-500'}`}></div>
+                  <div className={`w-2 h-2 rounded-full animate-bounce delay-100 ${darkMode ? 'bg-blue-400' : 'bg-blue-500'}`}></div>
+                  <div className={`w-2 h-2 rounded-full animate-bounce delay-200 ${darkMode ? 'bg-blue-400' : 'bg-blue-500'}`}></div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
       
-      {/* Input area */}
-      <div className="flex gap-2">
-        <input 
-          value={query} 
-          onChange={e => setQuery(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="What do you want to learn? (e.g. JavaScript, Machine Learning)" 
-          className="flex-grow border rounded px-3 py-2" 
-        />
-        <button 
-          onClick={() => {
-            console.log('Send button clicked');
-            handleSuggest();
-          }} 
-          disabled={loading || !query.trim()}
-          className={`px-4 py-2 bg-blue-600 text-white rounded ${
-            loading || !query.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
-          }`}
-        >
-          Send
-        </button>
-      </div>
-      
-      {/* Quick suggestions */}
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button 
-          onClick={() => { 
-            console.log('JavaScript button clicked');
-            setQuery('JavaScript'); 
-            setTimeout(() => handleSuggest(), 100);
-          }} 
-          className="px-2 py-1 text-xs border rounded text-blue-600 hover:bg-blue-50"
-        >
-          JavaScript
-        </button>
-        <button 
-          onClick={() => { setQuery('Machine Learning'); handleSuggest(); }} 
-          className="px-2 py-1 text-xs border rounded text-blue-600 hover:bg-blue-50"
-        >
-          Machine Learning
-        </button>
-        <button 
-          onClick={() => { setQuery('Python'); handleSuggest(); }} 
-          className="px-2 py-1 text-xs border rounded text-blue-600 hover:bg-blue-50"
-        >
-          Python
-        </button>
-        <button 
-          onClick={() => { setQuery('Data Science'); handleSuggest(); }} 
-          className="px-2 py-1 text-xs border rounded text-blue-600 hover:bg-blue-50"
-        >
-          Data Science
-        </button>
+      {/* Input Area */}
+      <div className={`p-4 border-t ${
+        darkMode 
+          ? 'border-slate-700/50 bg-gradient-to-r from-slate-800/50 to-slate-900/50' 
+          : 'border-blue-100/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/50'
+      }`}>
+        <div className="flex gap-3 mb-4">
+          <div className="flex-1 relative">
+            <input 
+              value={query} 
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="What would you like to learn today?" 
+              className={`w-full border rounded-xl px-4 py-3 pr-12 transition-all duration-200 focus:outline-none focus:ring-2 text-sm ${
+                darkMode 
+                  ? 'bg-slate-700/80 border-slate-600 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500/20 focus:bg-slate-700' 
+                  : 'bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500/20 focus:bg-white'
+              }`}
+              disabled={loading}
+            />
+          </div>
+          <button 
+            onClick={handleSuggest} 
+            disabled={loading || !query.trim()}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg ${
+              loading || !query.trim() 
+                ? (darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
+                : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:shadow-xl hover:scale-105 active:scale-95'
+            }`}
+          >
+            <Send className="h-4 w-4" />
+            <span className="hidden sm:inline">Send</span>
+          </button>
+        </div>
+        
+        {/* Quick Suggestions */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {quickSuggestOptions.map((option, idx) => {
+            const IconComponent = option.icon;
+            return (
+              <button 
+                key={idx}
+                onClick={() => handleQuickSuggest(option.name)} 
+                disabled={loading}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                  loading 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : `bg-gradient-to-r ${option.color} text-white hover:shadow-lg hover:scale-105 active:scale-95`
+                }`}
+              >
+                <IconComponent className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{option.name}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

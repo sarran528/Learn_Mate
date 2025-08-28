@@ -1,18 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-export default function Checklist({ items = [], onRemove }) {
-  // Track completed items with their indices
-  const [completedItems, setCompletedItems] = useState([]);
-  
-  const toggleComplete = (index) => {
-    if (completedItems.includes(index)) {
-      setCompletedItems(completedItems.filter(i => i !== index));
-    } else {
-      setCompletedItems([...completedItems, index]);
-    }
-  };
-  
+export default function Checklist({ items = [], onRemove, onToggle }) {
   // Calculate progress percentage
+  const completedItems = items.filter(item => item.completed);
   const progressPercentage = items.length > 0 
     ? Math.round((completedItems.length / items.length) * 100) 
     : 0;
@@ -44,25 +34,25 @@ export default function Checklist({ items = [], onRemove }) {
             <li 
               key={idx} 
               className={`flex items-center p-2 rounded border ${
-                completedItems.includes(idx) 
+                task.completed 
                   ? 'bg-green-50 border-green-100' 
                   : 'border-gray-200 hover:bg-gray-50'
               }`}
             >
               <input
                 type="checkbox"
-                checked={completedItems.includes(idx)}
-                onChange={() => toggleComplete(idx)}
+                checked={task.completed}
+                onChange={() => onToggle && onToggle(idx)}
                 className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
               />
               <span 
                 className={`ml-3 flex-grow ${
-                  completedItems.includes(idx) 
+                  task.completed 
                     ? 'line-through text-gray-500' 
                     : 'text-gray-700'
                 }`}
               >
-                {task}
+                {task.text || task}
               </span>
               <button 
                 onClick={() => onRemove(idx)} 
