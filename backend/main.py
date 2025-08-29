@@ -135,6 +135,8 @@ SYSTEM_PROMPT = '''You are Learn_mate, an expert AI Learning Guide Agent.
 
 Your main goal is to help users create, understand, and follow personalized learning plans. You are friendly, encouraging, and an expert in any topic the user wants to learn.
 
+When the user mentions what they want to learn, you must identify the skill they want to learn. For example, if the user says "I want to learn physics", you should identify "physics" as the skill.
+
 Core Capabilities:
 1.  **Interactive Chat:** Engage in a natural, conversational manner.
 2.  **Learning Plan Generation:** If the user wants a learning plan, ask for the topic, their available time (in days), and their preferred language. Once you have this, generate a comprehensive plan.
@@ -251,7 +253,14 @@ async def chat_with_agent(chat_history: ChatHistory, current_user: dict = Depend
         if msg["is_user"]:
             messages.append(HumanMessage(content=msg["message"]))
         else:
-            messages.append(AIMessage(content=msg["message"]))
+            # The AI response is a JSON string, so we need to load it
+            try:
+                ai_response_data = json.loads(msg["message"])
+                messages.append(AIMessage(content=ai_response_data.get("message", "")))
+            except json.JSONDecodeError:
+                # Handle cases where the message is not a valid JSON string
+                messages.append(AIMessage(content=msg["message"]))
+
 
     # Generate response
     response = llm.invoke(messages)
