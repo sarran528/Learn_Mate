@@ -1,74 +1,9 @@
-import { useState, useEffect, type FC } from 'react';
+import { useState, useEffect } from 'react';
 import { BrainCircuit, Sun, Moon, LogOut, Sparkles, Menu, X, MessageSquare, FileText } from 'lucide-react';
-
-// Mock components for demonstration (typed)
-interface WorkspaceProps { darkMode: boolean }
-const Workspace: FC<WorkspaceProps> = ({ darkMode }) => (
-  <div className="h-full flex flex-col">
-    <div className={`flex-1 p-6 rounded-xl ${darkMode ? 'bg-slate-800/50' : 'bg-white/50'} backdrop-blur-sm`}>
-      <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-        Learning Workspace
-      </h3>
-      <div className="grid gap-4 h-full">
-        <div className={`p-4 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-gray-50'} min-h-[200px]`}>
-          <h4 className={`font-medium mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Study Materials</h4>
-          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Your learning content goes here...</p>
-        </div>
-        <div className={`p-4 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-gray-50'} min-h-[200px]`}>
-          <h4 className={`font-medium mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Progress Tracker</h4>
-          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Track your learning progress...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-interface ChatInterfaceProps { darkMode: boolean }
-const ChatInterface: FC<ChatInterfaceProps> = ({ darkMode }) => (
-  <div className="h-full flex flex-col">
-    <div className={`flex-1 ${darkMode ? 'bg-slate-800/50' : 'bg-white/50'} backdrop-blur-sm rounded-xl p-4`}>
-      <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-        AI Assistant
-      </h3>
-      <div className="flex-1 space-y-3 mb-4 max-h-[400px] overflow-y-auto">
-        <div className={`p-3 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-gray-100'}`}>
-          <p className={`text-sm ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-            Hi! I'm your AI learning assistant. How can I help you today?
-          </p>
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          placeholder="Ask me anything..."
-          className={`flex-1 px-3 py-2 rounded-lg border text-sm ${
-            darkMode 
-              ? 'bg-slate-700 border-slate-600 text-white placeholder-gray-400' 
-              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-          } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-        />
-        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm">
-          Send
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
-interface AuthProps { setToken: (t: string) => void; darkMode: boolean }
-const Auth: FC<AuthProps> = ({ setToken, darkMode }) => (
-  <div className="max-w-md mx-auto mt-8 p-6 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl">
-    <h2 className={`text-2xl font-bold text-center mb-6 ${darkMode ? 'text-gray-800' : 'text-gray-900'}`}>
-      Welcome to Learn_mate
-    </h2>
-    <button
-      onClick={() => setToken('demo-token')}
-      className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-xl font-semibold hover:scale-105 transition-transform"
-    >
-      Get Started
-    </button>
-  </div>
-);
+import Workspace from './components/Workspace';
+import ChatInterface from './components/ChatInterface';
+import Auth from './components/Auth';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   const [token, setToken] = useState<string | null>(null);
@@ -79,22 +14,20 @@ function App() {
   const [activeMobileView, setActiveMobileView] = useState('workspace'); // 'workspace' or 'chat'
 
   useEffect(() => {
-    // Simulating localStorage without actually using it
-    // In a real app, you'd use localStorage here
-    const storedToken = null; // localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
+    try {
+      const stored = localStorage.getItem('token');
+      if (stored) setToken(stored);
+    } catch {}
   }, []);
 
   const handleSetToken = (newToken: string) => {
     setToken(newToken);
-    // In a real app: localStorage.setItem('token', newToken);
+  try { localStorage.setItem('token', newToken); } catch {}
   };
 
   const handleLogout = () => {
     setToken(null);
-    // In a real app: localStorage.removeItem('token');
+  try { localStorage.removeItem('token'); } catch {}
     setChecklist([]);
     setRoadmap([]);
   };
@@ -261,7 +194,9 @@ function App() {
       <main className="relative z-10">
         {!token ? (
           <div className="px-4 sm:px-6 lg:px-8 py-8">
-            <Auth setToken={handleSetToken} darkMode={darkMode} />
+            <ErrorBoundary>
+              <Auth setToken={handleSetToken} darkMode={darkMode} />
+            </ErrorBoundary>
           </div>
         ) : (
           <>
@@ -277,7 +212,9 @@ function App() {
                       : 'bg-white/80 border-white/20'
                     )
                   }>
-                    <Workspace darkMode={darkMode} />
+                    <ErrorBoundary>
+                      <Workspace darkMode={darkMode} setDarkMode={setDarkMode} />
+                    </ErrorBoundary>
                   </div>
                 </div>
 
@@ -290,9 +227,14 @@ function App() {
                       : 'bg-white/80 border-white/20'
                     )
                   }>
-                    <ChatInterface
-                      darkMode={darkMode}
-                    />
+                    <ErrorBoundary>
+                      <ChatInterface
+                        token={token || ''}
+                        setChecklist={setChecklist as any}
+                        setRoadmap={setRoadmap as any}
+                        darkMode={darkMode}
+                      />
+                    </ErrorBoundary>
                   </div>
                 </div>
               </div>
@@ -307,13 +249,18 @@ function App() {
                   : 'bg-white/80 border-white/20'
                 )
               }>
-                {activeMobileView === 'workspace' ? (
-                  <Workspace darkMode={darkMode} />
-                ) : (
-                  <ChatInterface
-                    darkMode={darkMode}
-                  />
-                )}
+                <ErrorBoundary>
+                  {activeMobileView === 'workspace' ? (
+                    <Workspace darkMode={darkMode} setDarkMode={setDarkMode} />
+                  ) : (
+                    <ChatInterface
+                      token={token || ''}
+                      setChecklist={setChecklist as any}
+                      setRoadmap={setRoadmap as any}
+                      darkMode={darkMode}
+                    />
+                  )}
+                </ErrorBoundary>
               </div>
             </div>
           </>

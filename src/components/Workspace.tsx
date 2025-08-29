@@ -56,7 +56,9 @@ export default function Workspace({ darkMode = false, setDarkMode }: Props) {
   const [tab, setTab] = useState<Tab>('checklist');
 
   const [roadmap, setRoadmap] = useState<string[]>([]);
-  const [checklist, setChecklist] = useState<string[]>([]);
+  // Checklist now supports completion state
+  type ChecklistItem = { text: string; done: boolean };
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [schedule, setSchedule] = useState<string[]>([]);
   const [resources, setResources] = useState<string[]>([]);
 
@@ -68,7 +70,7 @@ export default function Workspace({ darkMode = false, setDarkMode }: Props) {
   useEffect(() => {
     const tmpl = TEMPLATES[skill] || { roadmap: [], checklist: [], schedule: [], resources: [] };
     setRoadmap(tmpl.roadmap.slice());
-    setChecklist(tmpl.checklist.slice());
+    setChecklist(tmpl.checklist.map(t => ({ text: t, done: false })));
     setSchedule(tmpl.schedule.slice());
     setResources(tmpl.resources.slice());
   }, [skill]);
@@ -77,14 +79,49 @@ export default function Workspace({ darkMode = false, setDarkMode }: Props) {
   const addRoadmap = () => { if (newRoadmapStep.trim()) { setRoadmap(r => [...r, newRoadmapStep.trim()]); setNewRoadmapStep(''); } };
   const removeRoadmap = (i: number) => setRoadmap(r => r.filter((_, idx) => idx !== i));
 
-  const addChecklist = () => { if (newChecklistTask.trim()) { setChecklist(c => [...c, newChecklistTask.trim()]); setNewChecklistTask(''); } };
+  const addChecklist = () => { if (newChecklistTask.trim()) { setChecklist(c => [...c, { text: newChecklistTask.trim(), done: false }]); setNewChecklistTask(''); } };
   const removeChecklist = (i: number) => setChecklist(c => c.filter((_, idx) => idx !== i));
+  const toggleChecklist = (i: number) => setChecklist(c => c.map((it, idx) => idx === i ? { ...it, done: !it.done } : it));
 
   const addSchedule = () => { if (newScheduleItem.trim()) { setSchedule(s => [...s, newScheduleItem.trim()]); setNewScheduleItem(''); } };
   const removeSchedule = (i: number) => setSchedule(s => s.filter((_, idx) => idx !== i));
 
   const addResource = () => { if (newResource.trim()) { setResources(r => [...r, newResource.trim()]); setNewResource(''); } };
   const removeResource = (i: number) => setResources(r => r.filter((_, idx) => idx !== i));
+
+  // inline edit states
+  const [editRoadmapIdx, setEditRoadmapIdx] = useState<number | null>(null);
+  const [editRoadmapText, setEditRoadmapText] = useState('');
+
+  const [editChecklistIdx, setEditChecklistIdx] = useState<number | null>(null);
+  const [editChecklistText, setEditChecklistText] = useState('');
+
+  const [editScheduleIdx, setEditScheduleIdx] = useState<number | null>(null);
+  const [editScheduleText, setEditScheduleText] = useState('');
+
+  const [editResourceIdx, setEditResourceIdx] = useState<number | null>(null);
+  const [editResourceText, setEditResourceText] = useState('');
+
+  // reordering helpers (move item up/down)
+  const move = <T,>(arr: T[], from: number, to: number) => {
+    const copy = arr.slice();
+    const [item] = copy.splice(from, 1);
+    copy.splice(to, 0, item);
+    return copy;
+  };
+
+  const moveRoadmap = (i: number, dir: -1 | 1) => setRoadmap(r => {
+    const t = i + dir; if (t < 0 || t >= r.length) return r; return move(r, i, t);
+  });
+  const moveChecklist = (i: number, dir: -1 | 1) => setChecklist(r => {
+    const t = i + dir; if (t < 0 || t >= r.length) return r; return move(r, i, t);
+  });
+  const moveSchedule = (i: number, dir: -1 | 1) => setSchedule(r => {
+    const t = i + dir; if (t < 0 || t >= r.length) return r; return move(r, i, t);
+  });
+  const moveResource = (i: number, dir: -1 | 1) => setResources(r => {
+    const t = i + dir; if (t < 0 || t >= r.length) return r; return move(r, i, t);
+  });
 
   return (
     <div className={`${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'} min-h-[60vh] rounded-lg shadow`}>
@@ -124,12 +161,42 @@ export default function Workspace({ darkMode = false, setDarkMode }: Props) {
             {tab === 'checklist' && (
               <div>
                 <h3 className="text-xl font-bold mb-3">Checklist</h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <button onClick={() => setChecklist([])} className="px-2 py-1 text-sm rounded border">Clear</button>
+                  <button onClick={() => {
+                    const tmpl = TEMPLATES[skill]?.checklist ?? [];
+                    setChecklist(tmpl.map(t => ({ text: t, done: false })));
+                  }} className="px-2 py-1 text-sm rounded border">Reset to template</button>
+                </div>
                 <ul className="space-y-2 mb-4">
                   {checklist.map((t, i) => (
                     <li key={i} className="flex items-center justify-between bg-gray-50 p-3 rounded">
-                      <div>{t}</div>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => removeChecklist(i)} className="text-red-500">Remove</button>
+                        <input type="checkbox" checked={t.done} onChange={() => toggleChecklist(i)} />
+                        {editChecklistIdx === i ? (
+                          <input
+                            value={editChecklistText}
+                            onChange={e=>setEditChecklistText(e.target.value)}
+                            className="px-2 py-1 rounded border"
+                          />
+                        ) : (
+                          <span className={t.done ? 'line-through opacity-70' : ''}>{t.text}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {editChecklistIdx === i ? (
+                          <>
+                            <button onClick={() => { setChecklist(c => c.map((it, idx) => idx === i ? { ...it, text: editChecklistText.trim() || it.text } : it)); setEditChecklistIdx(null); setEditChecklistText(''); }} className="text-green-600">Save</button>
+                            <button onClick={() => { setEditChecklistIdx(null); setEditChecklistText(''); }} className="text-gray-500">Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => { setEditChecklistIdx(i); setEditChecklistText(t.text); }} className="text-blue-600">Edit</button>
+                            <button onClick={() => moveChecklist(i, -1)} className="text-gray-500">▲</button>
+                            <button onClick={() => moveChecklist(i, 1)} className="text-gray-500">▼</button>
+                            <button onClick={() => removeChecklist(i)} className="text-red-500">Remove</button>
+                          </>
+                        )}
                       </div>
                     </li>
                   ))}
@@ -144,11 +211,35 @@ export default function Workspace({ darkMode = false, setDarkMode }: Props) {
             {tab === 'roadmap' && (
               <div>
                 <h3 className="text-xl font-bold mb-3">Roadmap</h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <button onClick={() => setRoadmap([])} className="px-2 py-1 text-sm rounded border">Clear</button>
+                  <button onClick={() => setRoadmap(TEMPLATES[skill]?.roadmap ?? [])} className="px-2 py-1 text-sm rounded border">Reset to template</button>
+                </div>
                 <ol className="list-decimal ml-6 space-y-3 mb-4">
                   {roadmap.map((s, i) => (
                     <li key={i} className="flex items-start justify-between">
-                      <div className="max-w-[80%]">{s}</div>
-                      <div className="ml-4"><button onClick={()=>removeRoadmap(i)} className="text-red-500">Remove</button></div>
+                      <div className="max-w-[80%]">
+                        {editRoadmapIdx === i ? (
+                          <input value={editRoadmapText} onChange={e=>setEditRoadmapText(e.target.value)} className="w-full px-2 py-1 rounded border" />
+                        ) : (
+                          <span>{s}</span>
+                        )}
+                      </div>
+                      <div className="ml-4 flex items-center gap-2">
+                        {editRoadmapIdx === i ? (
+                          <>
+                            <button onClick={() => { setRoadmap(r => r.map((v, idx) => idx === i ? (editRoadmapText.trim() || v) : v)); setEditRoadmapIdx(null); setEditRoadmapText(''); }} className="text-green-600">Save</button>
+                            <button onClick={() => { setEditRoadmapIdx(null); setEditRoadmapText(''); }} className="text-gray-500">Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => { setEditRoadmapIdx(i); setEditRoadmapText(s); }} className="text-blue-600">Edit</button>
+                            <button onClick={() => moveRoadmap(i, -1)} className="text-gray-500">▲</button>
+                            <button onClick={() => moveRoadmap(i, 1)} className="text-gray-500">▼</button>
+                            <button onClick={()=>removeRoadmap(i)} className="text-red-500">Remove</button>
+                          </>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ol>
@@ -162,11 +253,35 @@ export default function Workspace({ darkMode = false, setDarkMode }: Props) {
             {tab === 'schedule' && (
               <div>
                 <h3 className="text-xl font-bold mb-3">Schedule</h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <button onClick={() => setSchedule([])} className="px-2 py-1 text-sm rounded border">Clear</button>
+                  <button onClick={() => setSchedule(TEMPLATES[skill]?.schedule ?? [])} className="px-2 py-1 text-sm rounded border">Reset to template</button>
+                </div>
                 <ul className="list-disc ml-6 mb-4">
                   {schedule.map((s, i) => (
                     <li key={i} className="flex items-center justify-between py-1">
-                      <div>{s}</div>
-                      <button onClick={()=>removeSchedule(i)} className="text-red-500">Remove</button>
+                      <div className="max-w-[80%]">
+                        {editScheduleIdx === i ? (
+                          <input value={editScheduleText} onChange={e=>setEditScheduleText(e.target.value)} className="w-full px-2 py-1 rounded border" />
+                        ) : (
+                          <span>{s}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 ml-2">
+                        {editScheduleIdx === i ? (
+                          <>
+                            <button onClick={() => { setSchedule(r => r.map((v, idx) => idx === i ? (editScheduleText.trim() || v) : v)); setEditScheduleIdx(null); setEditScheduleText(''); }} className="text-green-600">Save</button>
+                            <button onClick={() => { setEditScheduleIdx(null); setEditScheduleText(''); }} className="text-gray-500">Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => { setEditScheduleIdx(i); setEditScheduleText(s); }} className="text-blue-600">Edit</button>
+                            <button onClick={() => moveSchedule(i, -1)} className="text-gray-500">▲</button>
+                            <button onClick={() => moveSchedule(i, 1)} className="text-gray-500">▼</button>
+                            <button onClick={()=>removeSchedule(i)} className="text-red-500">Remove</button>
+                          </>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -180,11 +295,35 @@ export default function Workspace({ darkMode = false, setDarkMode }: Props) {
             {tab === 'resources' && (
               <div>
                 <h3 className="text-xl font-bold mb-3">Resources</h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <button onClick={() => setResources([])} className="px-2 py-1 text-sm rounded border">Clear</button>
+                  <button onClick={() => setResources(TEMPLATES[skill]?.resources ?? [])} className="px-2 py-1 text-sm rounded border">Reset to template</button>
+                </div>
                 <ul className="list-disc ml-6 mb-4">
                   {resources.map((r, i) => (
                     <li key={i} className="flex items-center justify-between py-1">
-                      <a href={r} target="_blank" rel="noreferrer" className="text-blue-600 underline">{r}</a>
-                      <button onClick={()=>removeResource(i)} className="text-red-500 ml-4">Remove</button>
+                      <div className="max-w-[80%]">
+                        {editResourceIdx === i ? (
+                          <input value={editResourceText} onChange={e=>setEditResourceText(e.target.value)} className="w-full px-2 py-1 rounded border" />
+                        ) : (
+                          <a href={r} target="_blank" rel="noreferrer" className="text-blue-600 underline">{r}</a>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 ml-2">
+                        {editResourceIdx === i ? (
+                          <>
+                            <button onClick={() => { setResources(rs => rs.map((v, idx) => idx === i ? (editResourceText.trim() || v) : v)); setEditResourceIdx(null); setEditResourceText(''); }} className="text-green-600">Save</button>
+                            <button onClick={() => { setEditResourceIdx(null); setEditResourceText(''); }} className="text-gray-500">Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => { setEditResourceIdx(i); setEditResourceText(r); }} className="text-blue-600">Edit</button>
+                            <button onClick={() => moveResource(i, -1)} className="text-gray-500">▲</button>
+                            <button onClick={() => moveResource(i, 1)} className="text-gray-500">▼</button>
+                            <button onClick={()=>removeResource(i)} className="text-red-500">Remove</button>
+                          </>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
