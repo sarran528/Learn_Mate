@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Send, Bot, User, Sparkles, Zap, BookOpen, Code, Brain, Database, Lightbulb } from 'lucide-react';
+import { 
+  Send, Bot, User, Sparkles, Zap, BookOpen, Code, Brain, 
+  Database, Lightbulb, FolderPlus, LayoutDashboard
+} from 'lucide-react';
 
 // Enhanced local suggestion engine with more learning paths
 const TEMPLATES = {
