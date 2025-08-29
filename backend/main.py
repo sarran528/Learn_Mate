@@ -119,6 +119,8 @@ class ChatResponse(BaseModel):
     message: str
     checklist: List[str] = []
     roadmap: List[str] = []
+    schedule: List[str] = []
+    resources: List[str] = []
 
 # --- Gemini Model Initialization ---
 try:
@@ -131,31 +133,40 @@ except Exception as e:
     logger.error(f"Failed to initialize Gemini model: {e}")
     llm = None
 
-SYSTEM_PROMPT = '''You are Learn_mate, an expert AI Learning Guide Agent.
+SYSTEM_PROMPT = '''You are Learn_mate, an expert AI Learning Guide Agent that helps users create personalized learning plans.
 
-Your main goal is to help users create, understand, and follow personalized learning plans. You are friendly, encouraging, and an expert in any topic the user wants to learn.
-
-When the user mentions what they want to learn, you must identify the skill they want to learn. For example, if the user says "I want to learn physics", you should identify "physics" as the skill.
-
-Core Capabilities:
-1.  **Interactive Chat:** Engage in a natural, conversational manner.
-2.  **Learning Plan Generation:** If the user wants a learning plan, ask for the topic, their available time (in days), and their preferred language. Once you have this, generate a comprehensive plan.
-3.  **Question Answering:** Answer questions about the learning plan, suggest resources, and explain concepts.
-4.  **Progress & Motivation:** Encourage users and help them stay on track.
-
-**Output Format:**
-You MUST respond in a JSON format with the following keys:
-- "message": Your conversational response to the user. This should be in markdown.
-- "checklist": An array of strings representing the learning checklist. This should be updated based on the conversation.
-- "roadmap": An array of strings representing the learning roadmap. This should be updated based on the conversation.
-
-Example response:
+CRITICAL: You MUST ALWAYS respond with valid JSON in this exact format:
 {
-  "message": "Great! Let's start with the basics of Python. Here is a checklist and a roadmap for you.",
-  "checklist": ["Install Python", "Run your first 'Hello, World!' program"],
-  "roadmap": ["Day 1: Introduction to Python", "Day 2: Variables and Data Types"]
+  "message": "your conversational response in markdown",
+  "checklist": ["item1", "item2"],
+  "roadmap": ["step1", "step2"],
+  "schedule": ["day1: task", "day2: task"],
+  "resources": ["https://example.com", "book title"]
 }
-'''
+
+Rules:
+1. ALWAYS return valid JSON - no extra text before or after
+2. Include ALL 5 keys: message, checklist, roadmap, schedule, resources
+3. Make arrays relevant to the user's request
+4. If user asks about a new topic, generate a complete learning plan
+5. Be encouraging and provide practical, actionable content
+6. Keep message conversational but informative
+
+When user wants to learn something:
+- Ask clarifying questions if needed (timeframe, experience level)
+- Generate a complete roadmap with clear steps
+- Provide actionable checklist items
+- Create a realistic schedule
+- Suggest quality learning resources
+
+Example for "Learn Python":
+{
+  "message": "Great choice! Python is perfect for beginners. I've created a comprehensive 7-day learning plan for you. Start with the basics and work through each checkpoint systematically.",
+  "checklist": ["Install Python 3.11+", "Set up VS Code with Python extension", "Complete first Hello World program", "Practice variables and data types", "Write your first function"],
+  "roadmap": ["Day 1-2: Python syntax and basic operations", "Day 3-4: Data structures (lists, dicts)", "Day 5-6: Functions and modules", "Day 7: Small project"],
+  "schedule": ["Day 1: Install Python, basic syntax (2 hours)", "Day 2: Variables, strings, numbers (2 hours)", "Day 3: Lists and loops (2 hours)", "Day 4: Dictionaries and sets (2 hours)", "Day 5: Functions (2 hours)", "Day 6: Modules and packages (2 hours)", "Day 7: Build a calculator project (3 hours)"],
+  "resources": ["https://docs.python.org/3/tutorial/", "https://realpython.com/python-first-steps/", "Automate the Boring Stuff with Python (book)", "https://pythontutor.com/visualize.html"]
+}'''
 
 # --- API Endpoints ---
 @app.get("/")
@@ -275,16 +286,42 @@ async def chat_with_agent(chat_history: ChatHistory, current_user: dict = Depend
     conn.close()
 
     try:
-        # The response from the AI should be a JSON string
-        # We need to remove the code block markers if they exist
-        if ai_response_text.startswith("```json"):
-            ai_response_text = ai_response_text[7:-4]
-        response_data = json.loads(ai_response_text)
-        return ChatResponse(**response_data)
+        # Clean up the response text - handle code blocks and extra whitespace
+        clean_response = ai_response_text.strip()
+        
+        # Remove markdown code blocks if present
+        if clean_response.startswith("```json"):
+            clean_response = clean_response[7:]
+        if clean_response.endswith("```"):
+            clean_response = clean_response[:-3]
+        
+        # Remove any leading/trailing whitespace again
+        clean_response = clean_response.strip()
+        
+        # Parse JSON
+        response_data = json.loads(clean_response)
+        
+        # Ensure all required keys exist with defaults
+        validated_response = {
+            "message": response_data.get("message", "I'm here to help you learn!"),
+            "checklist": response_data.get("checklist", []),
+            "roadmap": response_data.get("roadmap", []),
+            "schedule": response_data.get("schedule", []),
+            "resources": response_data.get("resources", [])
+        }
+        
+        return ChatResponse(**validated_response)
+        
     except (json.JSONDecodeError, TypeError) as e:
         logger.error(f"Error decoding AI response: {e}\nResponse: {ai_response_text}")
-        # Fallback to returning the raw text if parsing fails
-        return ChatResponse(message=ai_response_text)
+        # Fallback to returning the raw text with empty arrays
+        return ChatResponse(
+            message=ai_response_text,
+            checklist=[],
+            roadmap=[],
+            schedule=[],
+            resources=[]
+        )
 
 GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
 

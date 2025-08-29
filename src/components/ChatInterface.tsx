@@ -66,6 +66,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ token, setChecklist, setR
       const aiResponse: Message = { text: data.message, isUser: false };
       setMessages((prev) => [...prev, aiResponse]);
 
+      // Update UI panels with the new data
+      if (data.checklist) {
+        setChecklist(data.checklist);
+      }
+      if (data.roadmap) {
+        setRoadmap(data.roadmap);
+      }
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       setError(errorMessage);
