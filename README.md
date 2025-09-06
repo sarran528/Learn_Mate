@@ -1,41 +1,45 @@
 # 🧠 Learn_mate - AI Learning Guide Agent
 
-Learn_mate is a comprehensive AI-powered learning guide that generates personalized learning plans, roadmaps, schedules, and resources for any skill you want to master.
+Learn_mate is a comprehensive AI-powered learning platform that generates personalized learning plans, roadmaps, schedules, and resources for any skill you want to master. Built with modern web technologies and powered by Google Gemini AI.
 
 ![Learn_mate Demo](https://images.pexels.com/photos/4145153/pexels-photo-4145153.jpeg?auto=compress&cs=tinysrgb&w=1200)
 
 ## ✨ Features
 
-- **🎯 Smart Roadmap**: AI-generated milestone-based learning paths
-- **📅 Daily Schedule**: Structured weekly and daily learning plans
-- **✅ Interactive Checklist**: Track progress with actionable tasks
-- **📚 Curated Resources**: Quality learning materials for each milestone
-- **🌍 Multi-language Support**: Available in 8+ languages
-- **📱 Responsive Design**: Works seamlessly on all devices
-- **⚡ Real-time Generation**: Powered by OpenAI GPT-4
+- **🎯 AI-Powered Learning Plans**: Generate comprehensive learning paths using Google Gemini AI
+- **� Responsive Design**: Fully responsive interface that works seamlessly on desktop and mobile
+- **✅ Interactive Workspace**: Complete CRUD operations for checklists, roadmaps, schedules, and resources
+- **� AI Chat Interface**: Conversational AI assistant that extracts topics and creates structured learning plans
+- **🔐 User Authentication**: JWT-based authentication with Google OAuth integration
+- **� Local Storage**: Persistent user data and learning progress
+- **🌙 Dark Mode**: Beautiful dark/light theme support
+- **📊 Progress Tracking**: Visual progress indicators and completion tracking
 
 ## 🏗️ Architecture
 
-### Frontend (React + TypeScript)
-- **Framework**: React 18 with Vite
-- **Styling**: Tailwind CSS with custom gradients
+### Frontend (React + TypeScript + Vite)
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite 5.4+
+- **Styling**: Tailwind CSS with custom gradients and themes
 - **Icons**: Lucide React
-- **State Management**: React Hooks
-- **Language Support**: 8 languages including English, Hindi, Tamil, Spanish, French, German, Chinese, Japanese
+- **State Management**: React Hooks with localStorage persistence
+- **Routing**: Single-page application with component-based navigation
 
-### Backend (FastAPI + LangChain)
+### Backend (FastAPI + Google Gemini)
 - **Framework**: FastAPI with automatic API documentation
-- **AI**: LangChain with OpenAI GPT-4o-mini
-- **Validation**: Pydantic models
-- **CORS**: Configured for development and production
-- **Error Handling**: Comprehensive logging and error responses
+- **AI Engine**: Google Gemini 1.5 Flash via LangChain
+- **Database**: SQLite with SQLAlchemy-style queries
+- **Authentication**: JWT tokens with Google OAuth 2.0
+- **Security**: Password hashing with bcrypt, CORS configuration
+- **API Documentation**: Swagger UI and ReDoc
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 16+ 
+- Node.js 18+
 - Python 3.8+
-- OpenAI API Key
+- Google Gemini API Key
+- Google OAuth Client ID (optional, for Google Sign-In)
 
 ### Frontend Setup
 
@@ -44,7 +48,7 @@ Learn_mate is a comprehensive AI-powered learning guide that generates personali
    npm install
    ```
 
-2. **Set up environment variables:**
+2. **Configure environment:**
    ```bash
    cp .env.example .env
    # Edit .env to set your backend URL (default: http://localhost:8000)
@@ -67,10 +71,10 @@ The frontend will be available at `http://localhost:5173`
 2. **Create virtual environment:**
    ```bash
    python -m venv venv
-   
+
    # Windows
    venv\Scripts\activate
-   
+
    # macOS/Linux
    source venv/bin/activate
    ```
@@ -80,11 +84,13 @@ The frontend will be available at `http://localhost:5173`
    pip install -r requirements.txt
    ```
 
-4. **Set up environment variables:**
+4. **Configure environment:**
    ```bash
    cp .env.example .env
-   # Edit .env and add your OpenAI API key:
-   # OPENAI_API_KEY=your_openai_api_key_here
+   # Edit .env and add your API keys:
+   # GEMINI_API_KEY=your_gemini_api_key
+   # GOOGLE_OAUTH_CLIENT_ID=your_google_oauth_client_id (optional)
+   # SECRET_KEY=your_jwt_secret_key
    ```
 
 5. **Start the server:**
@@ -104,97 +110,164 @@ Once the backend is running, visit:
 
 - `GET /` - Health check
 - `GET /health` - Detailed health status
-- `POST /generate-plan` - Generate learning plan
+- `POST /chat` - AI chat with learning plan generation
+- `POST /register` - User registration
+- `POST /login` - User login
+- `POST /auth/google` - Google OAuth authentication
 
-### Example Request:
+### Chat API Example:
 ```json
 {
-  "skill": "Python Programming",
-  "duration": 30,
-  "language": "en"
+  "messages": [
+    {
+      "text": "I want to learn Python programming",
+      "isUser": true
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Great choice! Python is perfect for beginners...",
+  "checklist": ["Install Python 3.11+", "Set up VS Code", "..."],
+  "roadmap": ["Day 1-2: Python syntax", "Day 3-4: Data structures", "..."],
+  "schedule": ["Day 1: Install Python (2 hours)", "..."],
+  "resources": ["https://docs.python.org/3/tutorial/", "..."]
 }
 ```
 
 ## 🎨 UI Features
 
-### Learning Form
-- **Skill Input**: Free text with popular skill suggestions
-- **Duration Selection**: Quick buttons (7, 14, 30, 60 days) or custom input
-- **Language Selection**: Dropdown with flag icons for 8+ languages
-- **Smart Validation**: Real-time form validation with helpful hints
+### Authentication System
+- **JWT Authentication**: Secure token-based authentication
+- **Google OAuth**: One-click sign-in with Google
+- **Persistent Sessions**: Automatic login on page refresh
+- **User Profiles**: Avatar, name, and email integration
 
-### Learning Plan Display
-- **Tabbed Interface**: Organized into Roadmap, Schedule, Checklist, and Resources
-- **Progress Tracking**: Visual progress bars and completion percentages
-- **Interactive Checklist**: Click to complete tasks with visual feedback
-- **Resource Links**: Categorized links with type indicators and external link icons
+### AI Chat Interface
+- **Conversational AI**: Natural language interaction with Gemini
+- **Structured Responses**: Automatic extraction of learning components
+- **Context Awareness**: Remembers conversation history
+- **Error Handling**: Graceful fallbacks for API failures
 
-## 🌐 Supported Languages
+### Learning Workspace
+- **Tabbed Interface**: Organized into Overview, Checklist, Roadmap, Schedule, Resources
+- **Full CRUD Operations**: Add, edit, remove, and reorder all items
+- **Progress Tracking**: Visual completion indicators
+- **Skill Persistence**: Save and load multiple learning paths
+- **Mobile Responsive**: Optimized touch interactions
 
-- 🇺🇸 English
-- 🇮🇳 Hindi
-- 🇮🇳 Tamil
-- 🇪🇸 Spanish
-- 🇫🇷 French
-- 🇩🇪 German
-- 🇨🇳 Chinese
-- 🇯🇵 Japanese
+### Responsive Design
+- **Mobile-First**: Optimized for mobile devices
+- **Adaptive Layout**: Desktop sidebar, mobile overlay menu
+- **Touch-Friendly**: Large touch targets and gestures
+- **Dark Mode**: System-aware theme switching
+
+## 🔧 Configuration
+
+### Environment Variables
+
+**Frontend (.env):**
+```bash
+VITE_BACKEND_URL=http://localhost:8000
+```
+
+**Backend (.env):**
+```bash
+# Required
+GEMINI_API_KEY=your_gemini_api_key
+SECRET_KEY=your_jwt_secret_key
+
+# Optional
+GOOGLE_OAUTH_CLIENT_ID=your_google_oauth_client_id
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+```
 
 ## 🚀 Deployment
 
 ### Frontend (Vercel/Netlify)
 1. Build the project: `npm run build`
-2. Deploy the `dist` folder to your preferred hosting service
+2. Deploy the `dist` folder to your hosting service
 3. Set environment variable: `VITE_BACKEND_URL=your-backend-url`
 
-### Backend (Railway/Render)
+### Backend (Railway/Render/Heroku)
 
 #### Railway:
 1. Connect your GitHub repo to Railway
-2. Add environment variable: `OPENAI_API_KEY=your_key`
-3. Railway will auto-deploy from the `backend` directory
+2. Set root directory to `backend`
+3. Add environment variables
+4. Railway will auto-deploy with Python detection
 
 #### Render:
 1. Create new Web Service
-2. Connect repo, set build command: `pip install -r requirements.txt`
-3. Set start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-4. Add environment variable: `OPENAI_API_KEY=your_key`
+2. Connect repo, set root directory to `backend`
+3. Set build command: `pip install -r requirements.txt`
+4. Set start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+5. Add environment variables
+
+#### Heroku:
+1. Create new app
+2. Set buildpack to Python
+3. Deploy from `backend` directory
+4. Configure environment variables
 
 ## 📁 Project Structure
 
 ```
 learn_mate/
 ├── src/                          # Frontend source code
-│   ├── components/
-│   │   ├── LearningForm.tsx     # Main input form
-│   │   └── LearningPlan.tsx     # Plan display component
-│   ├── types/
-│   │   └── index.ts             # TypeScript definitions
-│   ├── App.tsx                  # Main app component
-│   └── main.tsx                 # Entry point
+│   ├── components/               # React components
+│   │   ├── Auth.jsx             # Authentication component
+│   │   ├── Chatbot.jsx          # AI chat interface
+│   │   ├── Checklist.jsx        # Task management
+│   │   ├── Roadmap.jsx          # Learning roadmap
+│   │   ├── Schedule.jsx         # Schedule planning
+│   │   ├── Resources.jsx        # Resource management
+│   │   ├── Navbar.jsx           # Navigation bar
+│   │   ├── Sidebar.jsx          # Sidebar navigation
+│   │   └── Workspace.tsx        # Main workspace
+│   ├── App.jsx                  # Main application component
+│   ├── main.tsx                 # Application entry point
+│   └── index.css                # Global styles
 ├── backend/                      # Backend source code
 │   ├── main.py                  # FastAPI application
+│   ├── learn_mate.db           # SQLite database
 │   ├── requirements.txt         # Python dependencies
 │   ├── .env.example            # Environment template
 │   └── README.md               # Backend documentation
 ├── public/                      # Static assets
+├── dist/                        # Build output
+├── package.json                 # Node.js dependencies
+├── vite.config.ts              # Vite configuration
+├── tailwind.config.js          # Tailwind CSS config
 └── README.md                   # Project documentation
 ```
 
 ## 🔧 Development
 
-### Adding New Languages
-1. Update `SUPPORTED_LANGUAGES` in `src/components/LearningForm.tsx`
-2. The backend automatically supports any language code you send
+### Available Scripts
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run preview  # Preview production build
+npm run lint     # Run ESLint
+```
 
-### Customizing the AI Prompt
-Edit the `create_learning_prompt` function in `backend/main.py` to modify how the AI generates plans.
+### Backend Development
+```bash
+cd backend
+python main.py   # Start FastAPI server
+```
 
-### Styling
-The app uses Tailwind CSS with custom color schemes. Main colors:
-- Primary: Blue (#3B82F6)
-- Secondary: Purple (#8B5CF6)
-- Accent: Green (#10B981)
+### Key Technologies
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
+- **Backend**: FastAPI, Google Gemini AI, SQLite
+- **Authentication**: JWT, Google OAuth 2.0
+- **Styling**: Tailwind CSS with custom themes
+- **Icons**: Lucide React
+- **Build Tools**: Vite, ESLint
 
 ## 🤝 Contributing
 
@@ -210,11 +283,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- OpenAI for providing the GPT-4 API
-- LangChain for the excellent AI framework
-- Tailwind CSS for the beautiful styling system
-- Lucide React for the clean icons
+- **Google Gemini AI** for providing the powerful AI capabilities
+- **LangChain** for the excellent AI framework integration
+- **FastAPI** for the robust and fast API framework
+- **Tailwind CSS** for the beautiful and responsive styling system
+- **Lucide React** for the clean and consistent icon set
+- **Vite** for the lightning-fast build tool
 
 ---
 
-**Built with ❤️ by the Learn_mate team**
+**Built with ❤️ using modern web technologies and AI**

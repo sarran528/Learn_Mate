@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, Bot, User, Sparkles, Zap, BookOpen, Code, Brain, 
   Database, Lightbulb, FolderPlus, LayoutDashboard
@@ -166,6 +166,16 @@ export default function Chatbot({ onSuggest, darkMode = false }) {
   const [messages, setMessages] = useState([
     { text: "Hello! I'm your learning assistant. What would you like to learn today?", isUser: false }
   ]);
+  const messagesEndRef = useRef(null);
+
+  // Auto-scroll to bottom when new messages are added
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, loading]);
 
   const findBestMatch = (input) => {
     // Convert input to lowercase for case-insensitive matching
@@ -297,6 +307,15 @@ export default function Chatbot({ onSuggest, darkMode = false }) {
     }
   };
 
+  const handleInputChange = (e) => {
+    setQuery(e.target.value);
+    // Auto-resize textarea on mobile for better UX
+    if (window.innerWidth <= 768) {
+      e.target.style.height = 'auto';
+      e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+    }
+  };
+
   const quickSuggestOptions = [
     { name: 'JavaScript', icon: Code, color: 'from-yellow-500 to-orange-600' },
     { name: 'Machine Learning', icon: Brain, color: 'from-purple-500 to-pink-600' },
@@ -312,66 +331,71 @@ export default function Chatbot({ onSuggest, darkMode = false }) {
   };
 
   return (
-    <div className={`flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden ${
+    <div className={`flex flex-col h-full rounded-xl lg:rounded-2xl shadow-xl lg:shadow-2xl overflow-hidden ${
       darkMode 
         ? 'bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl border border-slate-700/50' 
         : 'bg-gradient-to-br from-white/95 via-blue-50/95 to-indigo-50/95 backdrop-blur-xl border border-white/50'
-    }`}>
+    }`} style={{ 
+      WebkitTapHighlightColor: 'transparent',
+      WebkitTouchCallout: 'none',
+      WebkitUserSelect: 'none',
+      touchAction: 'manipulation'
+    }}>
       {/* Header */}
-      <div className={`px-6 py-4 border-b ${
+      <div className={`px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b ${
         darkMode 
           ? 'border-slate-700/50 bg-gradient-to-r from-slate-800/80 to-slate-900/80' 
           : 'border-blue-100/50 bg-gradient-to-r from-blue-50/80 to-indigo-50/80'
       }`}>
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-xl ${
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl ${
             darkMode 
               ? 'bg-gradient-to-br from-blue-600 to-purple-700 shadow-lg shadow-blue-500/25' 
               : 'bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/25'
           }`}>
-            <Bot className="h-5 w-5 text-white" />
+            <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
-          <div>
-            <h3 className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          <div className="flex-1 min-w-0">
+            <h3 className={`font-bold text-sm sm:text-base lg:text-lg truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               Learning Assistant
             </h3>
-            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`text-xs sm:text-sm truncate ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               AI-powered study companion
             </p>
           </div>
-          <div className="ml-auto">
-            <Sparkles className={`h-5 w-5 ${darkMode ? 'text-yellow-400' : 'text-yellow-500'} animate-pulse`} />
+          <div className="flex-shrink-0">
+            <Sparkles className={`h-4 w-4 sm:h-5 sm:w-5 ${darkMode ? 'text-yellow-400' : 'text-yellow-500'} animate-pulse`} />
           </div>
         </div>
       </div>
       
              {/* Chat Messages */}
-       <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${
+       <div className={`flex-1 overflow-y-auto p-2 sm:p-3 lg:p-4 space-y-2 sm:space-y-3 lg:space-y-4 ${
          darkMode ? 'bg-slate-900/20' : 'bg-white/20'
-       }`} style={{maxHeight: 'calc(100vh - 400px)'}}>
+       }`} style={{maxHeight: 'calc(100vh - 280px)', minHeight: '200px'}}>
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
-            <div className={`flex items-start gap-3 max-w-[85%] ${msg.isUser ? 'flex-row-reverse' : ''}`}>
-              <div className={`p-2 rounded-full flex-shrink-0 ${
+            <div className={`flex items-start gap-2 sm:gap-3 max-w-[90%] sm:max-w-[85%] ${msg.isUser ? 'flex-row-reverse' : ''}`}>
+              <div className={`p-1.5 sm:p-2 rounded-full flex-shrink-0 ${
                 msg.isUser 
                   ? (darkMode ? 'bg-blue-600' : 'bg-blue-500')
                   : (darkMode ? 'bg-slate-700' : 'bg-gray-200')
               }`}>
                 {msg.isUser ? (
-                  <User className="h-4 w-4 text-white" />
+                  <User className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                 ) : (
-                  <Bot className={`h-4 w-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                  <Bot className={`h-3 w-3 sm:h-4 sm:w-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
                 )}
               </div>
-              <div className={`p-4 rounded-2xl shadow-lg ${
+              <div className={`p-2 sm:p-3 lg:p-4 rounded-xl sm:rounded-2xl shadow-lg ${
                 msg.isUser 
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-md'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-sm sm:rounded-br-md'
                   : (darkMode 
-                      ? 'bg-slate-800/90 text-gray-100 border border-slate-700/50 rounded-bl-md' 
-                      : 'bg-white/90 text-gray-800 border border-gray-200/50 rounded-bl-md'
+                      ? 'bg-slate-800/90 text-gray-100 border border-slate-700/50 rounded-bl-sm sm:rounded-bl-md' 
+                      : 'bg-white/90 text-gray-800 border border-gray-200/50 rounded-bl-sm sm:rounded-bl-md'
                     )
               }`}>
-                <p className="text-sm leading-relaxed">{msg.text}</p>
+                <p className="text-xs sm:text-sm leading-relaxed break-words">{msg.text}</p>
               </div>
             </div>
           </div>
@@ -379,63 +403,71 @@ export default function Chatbot({ onSuggest, darkMode = false }) {
         
         {loading && (
           <div className="flex justify-start animate-fadeIn">
-            <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-full ${darkMode ? 'bg-slate-700' : 'bg-gray-200'}`}>
-                <Bot className={`h-4 w-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+            <div className="flex items-start gap-2 sm:gap-3">
+              <div className={`p-1.5 sm:p-2 rounded-full ${darkMode ? 'bg-slate-700' : 'bg-gray-200'}`}>
+                <Bot className={`h-3 w-3 sm:h-4 sm:w-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
               </div>
-              <div className={`p-4 rounded-2xl rounded-bl-md shadow-lg ${
+              <div className={`p-2 sm:p-3 lg:p-4 rounded-xl sm:rounded-2xl rounded-bl-sm sm:rounded-bl-md shadow-lg ${
                 darkMode 
                   ? 'bg-slate-800/90 border border-slate-700/50' 
                   : 'bg-white/90 border border-gray-200/50'
               }`}>
                 <div className="flex space-x-1">
-                  <div className={`w-2 h-2 rounded-full animate-bounce ${darkMode ? 'bg-blue-400' : 'bg-blue-500'}`}></div>
-                  <div className={`w-2 h-2 rounded-full animate-bounce delay-100 ${darkMode ? 'bg-blue-400' : 'bg-blue-500'}`}></div>
-                  <div className={`w-2 h-2 rounded-full animate-bounce delay-200 ${darkMode ? 'bg-blue-400' : 'bg-blue-500'}`}></div>
+                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-bounce ${darkMode ? 'bg-blue-400' : 'bg-blue-500'}`}></div>
+                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-bounce delay-100 ${darkMode ? 'bg-blue-400' : 'bg-blue-500'}`}></div>
+                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-bounce delay-200 ${darkMode ? 'bg-blue-400' : 'bg-blue-500'}`}></div>
                 </div>
               </div>
             </div>
           </div>
         )}
+        
+        {/* Scroll anchor */}
+        <div ref={messagesEndRef} />
       </div>
       
       {/* Input Area */}
-      <div className={`p-4 border-t ${
+      <div className={`p-2 sm:p-3 lg:p-4 border-t ${
         darkMode 
           ? 'border-slate-700/50 bg-gradient-to-r from-slate-800/50 to-slate-900/50' 
           : 'border-blue-100/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/50'
       }`}>
-        <div className="flex gap-3 mb-4">
+        <div className="flex gap-2 sm:gap-3 mb-2 sm:mb-3 lg:mb-4">
           <div className="flex-1 relative">
-            <input 
+            <textarea 
               value={query} 
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={handleInputChange}
               onKeyPress={handleKeyPress}
               placeholder="What would you like to learn today?" 
-              className={`w-full border rounded-xl px-4 py-3 pr-12 transition-all duration-200 focus:outline-none focus:ring-2 text-sm ${
+              className={`w-full border rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 transition-all duration-200 focus:outline-none focus:ring-2 text-xs sm:text-sm resize-none overflow-hidden ${
                 darkMode 
                   ? 'bg-slate-700/80 border-slate-600 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500/20 focus:bg-slate-700' 
                   : 'bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500/20 focus:bg-white'
               }`}
+              rows={1}
+              style={{ 
+                minHeight: window.innerWidth <= 768 ? '36px' : '44px',
+                maxHeight: '120px'
+              }}
               disabled={loading}
             />
           </div>
           <button 
             onClick={handleSuggest} 
             disabled={loading || !query.trim()}
-            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg ${
+            className={`px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 flex items-center gap-1 sm:gap-2 shadow-lg text-xs sm:text-sm ${
               loading || !query.trim() 
                 ? (darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
                 : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:shadow-xl hover:scale-105 active:scale-95'
             }`}
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Send</span>
           </button>
         </div>
         
         {/* Quick Suggestions */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-6 gap-1 sm:gap-2">
           {quickSuggestOptions.map((option, idx) => {
             const IconComponent = option.icon;
             return (
@@ -443,14 +475,19 @@ export default function Chatbot({ onSuggest, darkMode = false }) {
                 key={idx}
                 onClick={() => handleQuickSuggest(option.name)} 
                 disabled={loading}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                className={`flex items-center justify-center sm:justify-start gap-1 sm:gap-2 px-1.5 sm:px-2 lg:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg text-xs font-medium transition-all duration-200 min-w-0 touch-manipulation ${
                   loading 
                     ? 'opacity-50 cursor-not-allowed' 
-                    : `bg-gradient-to-r ${option.color} text-white hover:shadow-lg hover:scale-105 active:scale-95`
+                    : `bg-gradient-to-r ${option.color} text-white hover:shadow-lg hover:scale-105 active:scale-95 active:bg-opacity-80`
                 }`}
+                style={{ 
+                  minHeight: window.innerWidth <= 640 ? '32px' : '36px'
+                }}
               >
                 <IconComponent className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">{option.name}</span>
+                <span className="truncate text-xs sm:text-xs hidden xs:inline sm:inline lg:inline">
+                  {window.innerWidth <= 640 ? option.name.split(' ')[0] : option.name}
+                </span>
               </button>
             );
           })}
